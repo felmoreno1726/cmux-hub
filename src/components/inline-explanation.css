@@ -1,0 +1,56 @@
+.inline-explanation {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 10px;
+  border-bottom: 1px solid #252d37;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.inline-explanation-label {
+  color: #7e91a7;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+.inline-explanation-copy {
+  flex: 1;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #aebdce;
+}
+.inline-explanation-note {
+  color: #788898;
+  font-size: 11px;
+  margin-left: 6px;
+}
+.inline-explanation-old {
+  opacity: 0.6;
+}
+.inline-explanation-error {
+  color: #f09590;
+}
+.inline-explanation-controls {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+.inline-explanation-controls button {
+  padding: 3px;
+  color: #8b9bae;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.inline-explanation-controls button:hover:enabled {
+  background: #263345;
+  color: #cee4ff;
+}
+.inline-explanation-controls button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.inline-explanation-controls button:focus-visible {
+  outline: 2px solid #79c0ff;
+  outline-offset: 1px;
+}

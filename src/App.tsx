@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { ExplanationPanel } from "./components/ExplanationPanel.tsx";
+import React from "react";
 import { DiffView } from "./components/DiffView.tsx";
 import { Toolbar } from "./components/Toolbar.tsx";
 import { CIStatus } from "./components/CIStatus.tsx";
@@ -33,9 +32,6 @@ export default function App() {
   const { branch, hasTerminal, actions, hasPlan, hasReview } = useStatus();
   const { prUrl, prTitle, prState, checks, prComments } = usePRData();
   const { hasLauncher, servers } = useLauncher();
-  const [selectedFile, setSelectedFile] = useState("");
-  const showsExplanations =
-    route.page !== "plan" && route.page !== "review" && route.page !== "commits";
 
   // Establish WebSocket connection (individual hooks subscribe via ws-message events)
   useWebSocket(() => {});
@@ -61,60 +57,49 @@ export default function App() {
           onShowReview={hasReview ? () => navigate("/review") : undefined}
         />
         {hasLauncher && servers.length > 0 && <LauncherStatus servers={servers} />}
-        <div className="diff-workspace">
-          <div
-            className={`diff-content flex-1 overflow-auto px-4 pb-4 transition-opacity duration-200 ${refreshing ? "opacity-60" : "opacity-100"}`}
-          >
-            {route.page === "plan" ? (
-              <div className="pt-4">
-                <PlanView onBack={() => navigate("/")} hasTerminal={hasTerminal} />
-              </div>
-            ) : route.page === "review" ? (
-              <div className="pt-4">
-                <ReviewView onBack={() => navigate("/")} hasTerminal={hasTerminal} />
-              </div>
-            ) : (
-              <>
-                {(checks.length > 0 || prUrl) && (
-                  <div className="mt-4 mb-4">
-                    <CIStatus checks={checks} prTitle={prTitle} prUrl={prUrl} prState={prState} />
-                  </div>
-                )}
-                <DiffView
-                  diff={diff}
-                  loading={loading}
-                  error={error}
-                  onRefresh={refresh}
-                  hasTerminal={hasTerminal}
-                  selectedCommit={selectedCommit}
-                  showCommitList={route.page === "commits"}
-                  hasUncommittedChanges={hasUncommittedChanges}
-                  prComments={prComments.filter((c) => !c.isResolved)}
-                  onSelectCommit={(commit) => {
-                    navigate(`/commit/${commit.hash}`);
-                    selectCommit(commit);
-                  }}
-                  onClearCommit={() => {
-                    navigate("/");
-                    clearCommit();
-                  }}
-                />
-              </>
-            )}
-          </div>
-          <ExplanationPanel
-            isVisible={showsExplanations}
-            patch={rawDiff}
-            files={diff}
-            source={
-              selectedCommit
-                ? `Commit ${selectedCommit.hash}`
-                : `${branch} · ${base ?? "HEAD"} → working tree`
-            }
-            selectedFile={selectedFile}
-            onSelectFile={setSelectedFile}
-            isRefreshing={loading || Boolean(error)}
-          />
+        <div
+          className={`flex-1 overflow-auto px-4 pb-4 transition-opacity duration-200 ${refreshing ? "opacity-60" : "opacity-100"}`}
+        >
+          {route.page === "plan" ? (
+            <div className="pt-4">
+              <PlanView onBack={() => navigate("/")} hasTerminal={hasTerminal} />
+            </div>
+          ) : route.page === "review" ? (
+            <div className="pt-4">
+              <ReviewView onBack={() => navigate("/")} hasTerminal={hasTerminal} />
+            </div>
+          ) : (
+            <>
+              {(checks.length > 0 || prUrl) && (
+                <div className="mt-4 mb-4">
+                  <CIStatus checks={checks} prTitle={prTitle} prUrl={prUrl} prState={prState} />
+                </div>
+              )}
+              <DiffView
+                diff={diff}
+                rawDiff={rawDiff}
+                explanationSource={
+                  selectedCommit ? `Commit ${selectedCommit.hash}` : `${branch} · ${base ?? "HEAD"}`
+                }
+                loading={loading}
+                error={error}
+                onRefresh={refresh}
+                hasTerminal={hasTerminal}
+                selectedCommit={selectedCommit}
+                showCommitList={route.page === "commits"}
+                hasUncommittedChanges={hasUncommittedChanges}
+                prComments={prComments.filter((c) => !c.isResolved)}
+                onSelectCommit={(commit) => {
+                  navigate(`/commit/${commit.hash}`);
+                  selectCommit(commit);
+                }}
+                onClearCommit={() => {
+                  navigate("/");
+                  clearCommit();
+                }}
+              />
+            </>
+          )}
         </div>
       </div>
     </ReviewQueueProvider>

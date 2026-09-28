@@ -251,6 +251,15 @@ export function createAppConfig(deps: AppDeps) {
 
   const apiRoutes: Record<string, unknown> = {
     "/api/explain": {
+      GET(req: Request) {
+        const securityError = validateRequest(req, securityConfig);
+        if (securityError) return securityError;
+        return jsonResponse(
+          { provider: process.env.DIFFY_PROVIDER === "codex" ? "codex" : "claude" },
+          200,
+          req,
+        );
+      },
       async POST(req: Request) {
         const securityError = validateRequest(req, securityConfig);
         if (securityError) return securityError;

@@ -1,59 +1,53 @@
-# AI explanations
+# Inline AI explanations
 
 ## Goal
 
-Build on cmux-hub's live diff viewer with plain-English summaries, file explanations,
-and a comparison with the last reviewed diff. Keep the original project history and
-license. Keep the AI code separate so upstream changes remain easy to merge.
+Keep the code at full width. Add one short explanation under each visible file's
+header and a compact overall summary above the diffs. Use only + and − controls.
+The user approved automatic summaries for visible files and required the code to
+load independently of them.
 
-## Completion criteria
+## Behavior
 
-- The viewer explains the exact diff on screen, including a selected commit.
-- Readers can choose a file, detail level, and their installed model provider.
-- Changes make prior answers visibly stale. Refreshing Git never calls a model.
-- A review checkpoint supports a before/after explanation within the open page.
-- Requests are bounded, cached, and tested without paid model calls.
-- The fork builds and can be opened locally.
+- Diffs render immediately. AI requests never gate the diff view.
+- Visible files get a one-sentence explanation after a 600-millisecond settling
+  delay. Offscreen files wait until visible.
+- Plus adds detail. Minus shortens the answer and then hides it.
+- Provider settings live in environment variables, without a configuration menu.
+- Matching answers are cached. Changed code dims the old summary until a new
+  answer arrives. Queued requests for old or hidden diffs are skipped.
+- Requests run one at a time. Errors stay in the summary row and do not hide code.
+- There is no explanation sidebar, file selector, provider selector, or review
+  checkpoint menu.
 
-## Status
+## Architecture
 
-Implemented on `feat/ai-explanations` in the separate cmux-hub fork. The old
-Diffy checkout is unchanged. The AI code connects to the existing app through
-one request endpoint and one React panel.
+`InlineExplanation.tsx` owns visibility, detail, and request state.
+`explanation-client.ts` queues and caches browser requests. `explanations.ts` on
+the server calls the installed provider CLI. The upstream viewer only needs the
+raw patch and an inline summary slot in each file component.
 
-## Checks
-
-- 184 unit and server tests pass, including caching, duplicate requests,
-  retries, input limits, source separation, sampling, and request protection.
-- 9 browser tests pass, including the original viewer checks and the new
-  file selector, detail controls, review checkpoints, stale answers, and retry.
-- Type checking, lint, formatting, and the standalone build pass.
-- Real Claude and Codex calls both returned explanations for a small test patch.
-- Wide and narrow layouts were inspected.
+## Verification
 
 Run `bun test src server`, `bun run test:e2e`, `bun run typecheck`,
 `bun run lint`, `bun run fmt:check`, and `bun run build:compile`.
-Browser tests need Playwright's Chromium installed with
-`bunx playwright install chromium --only-shell`.
+Browser tests require Playwright Chromium. They use a fake model runner, never
+real subscription calls.
+
+The browser tests cover slow summaries, full-width diffs, per-file patches,
+plus/minus controls, caching, automatic refresh, offscreen files, and retry.
+The earlier implementation's real Claude and Codex smoke calls passed.
 
 ## Limits
 
-Review points and browser answers stay in memory until the page reloads or
-closes. Server answers last until the process stops, with a limit of 100 entries.
-Each request has a two-minute deadline. One model call runs at a time.
-Patches above two million characters are rejected with a suggestion to select a
-single file. Smaller patches are sampled when they exceed the chosen detail
-level's context budget, from 4,000 to 120,000 characters. Comparisons split that
-budget between the previous and current patch.
+Browser and server caches each retain at most 100 answers. A model request has a
+two-minute deadline. Queued requests can be skipped; a model call already running
+finishes and populates the cache. Navigation may reset the chosen detail level.
+Patches above two million characters are rejected. Context budgets range from
+4,000 to 120,000 characters, with a visible notice when code is omitted.
 
-The comparison explains two snapshots of the displayed patch. It is not a Git
-commit or a saved copy of the repository. File selection is explicit. Scrolling
-does not select files or trigger model calls.
+## Delivery
 
-No fork release has been published. Build from source for now. The updater uses
-this fork's releases so it cannot silently replace the AI version with upstream.
-
-## Next action
-
-Use the local build for review. Publish the feature branch after the user's
-approval, as required for outward-facing changes by the global AGENTS.md.
+Work stays on the local `feat/ai-explanations` branch until approved for publishing.
+The installed `cmux-hub-ai` command points to the compiled fork. No fork release
+has been published. The updater targets the fork, preserving the AI additions.

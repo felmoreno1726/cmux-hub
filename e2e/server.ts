@@ -54,6 +54,7 @@ const github = createGitHubService(defaultCommandRunner, repoDir);
 const watcher = createFileWatcher(defaultWatcherFactory, repoDir);
 
 const app = createAppConfig({
+  explanationRunner: async () => "This change updates the example code.",
   port: PORT,
   git,
   cmux,

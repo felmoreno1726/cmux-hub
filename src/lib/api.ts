@@ -18,6 +18,9 @@ async function fetchJSON<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  getExplanationSettings() {
+    return fetchJSON<{ provider: import("./explanations.ts").ExplanationProvider }>("/api/explain");
+  },
   explain(input: import("./explanations.ts").ExplanationRequest) {
     return fetchJSON<import("./explanations.ts").ExplanationResult>("/api/explain", {
       method: "POST",

@@ -6,7 +6,7 @@ import {
   readExplanationRequest,
   samplePatch,
 } from "../explanations.ts";
-import { selectFilePatch } from "../../src/lib/explanations.ts";
+import { indexFilePatches } from "../../src/lib/explanations.ts";
 import type { ExplanationRequest } from "../../src/lib/explanations.ts";
 import { createAppConfig } from "../app.ts";
 import { createGitService } from "../git.ts";
@@ -105,8 +105,8 @@ test("focused patches exclude other files and retain rename/delete metadata", ()
     "diff --git a/gone.ts b/gone.ts\ndeleted file mode 100644\n--- a/gone.ts\n+++ /dev/null\n@@ -1 +0,0 @@\n-old\n";
   const renamed =
     "diff --git a/old.ts b/renamed.ts\nsimilarity index 100%\nrename from old.ts\nrename to renamed.ts\n";
-  expect(selectFilePatch(PATCH + removed + renamed, "gone.ts")).toBe(removed);
-  expect(selectFilePatch(PATCH + removed + renamed, "renamed.ts")).toBe(renamed);
+  expect(indexFilePatches(PATCH + removed + renamed).get("gone.ts")).toBe(removed);
+  expect(indexFilePatches(PATCH + removed + renamed).get("renamed.ts")).toBe(renamed);
 });
 
 test("review prompts distinguish two snapshots and disclose sampling", () => {

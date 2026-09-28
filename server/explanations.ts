@@ -12,7 +12,7 @@ import type {
 
 const PATCH_BUDGETS = [4_000, 8_000, 24_000, 48_000, 120_000] as const;
 const DETAIL_INSTRUCTIONS = [
-  "Use at most two sentences. State the intent and the most important risk.",
+  "Use one short sentence, at most 30 words. State the behavior change and mention a risk only if it is concrete.",
   "Use at most 120 words. Cover intent, behavior changes, and notable risk.",
   "Use at most 250 words. Cover intent, important files, behavior, and missing tests.",
   "Use at most 500 words. Explain logical changes, data flow, risks, and test coverage.",

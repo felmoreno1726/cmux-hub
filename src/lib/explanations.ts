@@ -17,10 +17,13 @@ export type ExplanationResult = {
   cached: boolean;
 };
 
-export function selectFilePatch(patch: string, file: string): string {
-  return splitFilePatches(patch)
-    .filter((section) => parseDiff(section).some((entry) => entry.newPath === file))
-    .join("");
+export function indexFilePatches(patch: string): Map<string, string> {
+  const patches = new Map<string, string>();
+  for (const section of splitFilePatches(patch)) {
+    const file = parseDiff(section)[0];
+    if (file) patches.set(file.newPath, (patches.get(file.newPath) ?? "") + section);
+  }
+  return patches;
 }
 
 export function splitFilePatches(patch: string): string[] {

@@ -27,6 +27,12 @@
 .inline-explanation-old {
   opacity: 0.6;
 }
+.inline-explanation-brief {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
 .inline-explanation-error {
   color: #f09590;
 }

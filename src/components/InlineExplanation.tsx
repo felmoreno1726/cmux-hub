@@ -79,8 +79,10 @@ export function InlineExplanation({ patch, source, file, disabled }: Props) {
         ) : (
           <>
             {displayed && (
-              <span className={isStale ? "inline-explanation-old" : undefined}>
-                {displayed.result.text}
+              <span
+                className={`${depth === 0 ? "inline-explanation-brief" : ""} ${isStale ? "inline-explanation-old" : ""}`}
+              >
+                {depth === 0 ? displayed.result.text.split(/\n\s*\n/)[0] : displayed.result.text}
               </span>
             )}
             {error ? (

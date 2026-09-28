@@ -21,9 +21,16 @@ import { isPathInsideReviewDirs, listReviewFiles } from "./review.ts";
 import { createReviewWatcher } from "./review-watcher.ts";
 import type { Launcher, ServerState } from "./launcher.ts";
 import { generateInspectorScript } from "./inspector.ts";
+import {
+  createExplanationService,
+  ExplanationError,
+  readExplanationRequest,
+} from "./explanations.ts";
+import type { ModelRunner } from "./explanations.ts";
 
 type AppDeps = {
   port: number;
+  explanationRunner?: ModelRunner;
   git: GitService;
   cmux: CmuxService;
   github: GitHubService;
@@ -65,6 +72,7 @@ type AppDeps = {
 export function createAppConfig(deps: AppDeps) {
   const { port, git, cmux, github, cwd, defaultSurfaceId, browserSurfaceId } = deps;
   const securityConfig = { port };
+  const explanations = createExplanationService(deps.explanationRunner);
 
   function resolveSurfaceId(surfaceId?: string): string | undefined {
     return surfaceId ?? defaultSurfaceId;
@@ -242,6 +250,26 @@ export function createAppConfig(deps: AppDeps) {
   }
 
   const apiRoutes: Record<string, unknown> = {
+    "/api/explain": {
+      async POST(req: Request) {
+        const securityError = validateRequest(req, securityConfig);
+        if (securityError) return securityError;
+        const origin = req.headers.get("origin");
+        if (origin && origin !== new URL(req.url).origin) {
+          return errorResponse("Explanations must be requested from this viewer.", 403, req);
+        }
+        try {
+          const input = await readExplanationRequest(req);
+          return jsonResponse(await explanations.explain(input), 200, req);
+        } catch (error) {
+          return errorResponse(
+            error instanceof Error ? error.message : "The explanation failed.",
+            error instanceof ExplanationError ? error.status : 500,
+            req,
+          );
+        }
+      },
+    },
     "/api/diff": {
       async GET(req: Request) {
         const secErr = validateRequest(req, securityConfig);

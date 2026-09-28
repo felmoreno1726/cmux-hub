@@ -1,5 +1,26 @@
 # cmux-hub
 
+This is a fork of [cmux-hub by azu](https://github.com/azu/cmux-hub), with Diffy's AI summaries and explanations. The original viewer, history, and MIT license are preserved.
+
+## AI explanations in this fork
+
+The panel beside the diff explains the whole change or a selected file. Choose Claude or Codex, adjust the detail, then click **Explain changes**. Browsing and live updates never trigger a model call. Existing answers become visibly stale when the diff changes. Matching answers are reused from a bounded cache.
+
+Click **Mark this diff reviewed** to save a review point. **Since reviewed** compares the current diff with that point, including changes that were removed or reverted. Review points are separate for each source and last for the current page session. Selected commits use their own patch.
+
+Install and sign in to the `claude` or `codex` CLI first. Defaults are Claude `haiku` and Codex `gpt-5.6-luna`. Set `DIFFY_CLAUDE_MODEL` or `DIFFY_CODEX_MODEL` before starting to choose a different model. Claude runs with tools and customizations disabled. Codex runs with a read-only sandbox and user configuration disabled. Both run from a temporary empty directory with session persistence disabled. The selected diff is sent to the chosen provider. Large patches are sampled across files and labeled as incomplete.
+
+Run this fork from source:
+
+```sh
+bun install --frozen-lockfile
+bun src/cli.ts /path/to/your/repository
+```
+
+Build a standalone binary with `bun run build:compile`, then run `./cmux-hub /path/to/your/repository`. The upstream installation and plugin instructions below install azu's version, which does not contain this panel. This fork's self-updater points to this fork's releases. Until a release is published, update from source.
+
+The AI changes live in `server/explanations.ts`, `src/lib/explanations.ts`, and `src/components/ExplanationPanel.tsx`. See [the implementation notes](docs/ai-explanations.md) for checks and limits.
+
 A browser-based diff viewer for [cmux](https://cmux.dev). See what changed at a glance — syntax-highlighted diffs, inline review comments, commit history, GitHub PR status, and custom toolbar actions, all streamed in real time via WebSocket.
 
 https://github.com/user-attachments/assets/f5fbfd8b-6473-4f83-882e-967a5ca33205

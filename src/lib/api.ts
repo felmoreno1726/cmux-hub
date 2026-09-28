@@ -18,6 +18,12 @@ async function fetchJSON<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  explain(input: import("./explanations.ts").ExplanationRequest) {
+    return fetchJSON<import("./explanations.ts").ExplanationResult>("/api/explain", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
   getDiff(base?: string, target?: string) {
     const params = new URLSearchParams();
     if (base) params.set("base", base);

@@ -29,27 +29,37 @@ function SimpleActionButton({
   onSending: (sending: boolean) => void;
   className?: string;
 }) {
+  const [error, setError] = useState<string | null>(null);
   const handleExecute = async () => {
+    setError(null);
     onSending(true);
     try {
       await api.executeAction(id);
     } catch (e) {
-      console.error("Action failed:", e);
+      setError(e instanceof Error ? e.message : "The action failed.");
     } finally {
       onSending(false);
     }
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleExecute}
-      disabled={disabled}
-      className={className}
-    >
-      {action.label}
-    </Button>
+    <div>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleExecute}
+        disabled={disabled}
+        className={className}
+        title={action.description}
+      >
+        {action.label}
+      </Button>
+      {error && (
+        <p role="alert" className="text-xs text-red-400 whitespace-pre-wrap">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -117,16 +127,18 @@ function InputRow({
   onClose: () => void;
 }) {
   const [value, setValue] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const handleExecute = async () => {
     if (!value.trim() || !action.input) return;
+    setError(null);
     onSending(true);
     try {
       await api.executeAction(id, { [action.input.variable]: value });
       setValue("");
       onClose();
     } catch (e) {
-      console.error("Action failed:", e);
+      setError(e instanceof Error ? e.message : "The action failed.");
     } finally {
       onSending(false);
     }
@@ -135,21 +147,29 @@ function InputRow({
   const canSubmit = !sending && !!value.trim();
 
   return (
-    <div className="flex items-center gap-2 mt-2">
-      <Input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder={action.input?.placeholder ?? ""}
-        className="flex-1 bg-gray-800 border-gray-700 text-gray-200"
-        onKeyDown={(e) => {
-          if (e.key === "Enter") handleExecute();
-          if (e.key === "Escape") onClose();
-        }}
-        autoFocus
-      />
-      <Button size="sm" onClick={handleExecute} disabled={!canSubmit}>
-        Send
-      </Button>
+    <div className="mt-2">
+      {action.description && <p className="text-xs text-[#848d97] mb-2">{action.description}</p>}
+      <div className="flex items-center gap-2">
+        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={action.input?.placeholder ?? ""}
+          className="flex-1 bg-gray-800 border-gray-700 text-gray-200"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleExecute();
+            if (e.key === "Escape") onClose();
+          }}
+          autoFocus
+        />
+        <Button size="sm" onClick={handleExecute} disabled={!canSubmit}>
+          {action.label}
+        </Button>
+      </div>
+      {error && (
+        <p role="alert" className="text-xs text-red-400 whitespace-pre-wrap mt-2">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -223,13 +243,13 @@ export function Toolbar({
               onClick={submitReview}
               className="bg-[#d29922] hover:bg-[#bb8a1e] text-black"
             >
-              {submittingReview ? "Sending..." : `Finish review (${pending.length})`}
+              {submittingReview ? "Sending..." : `Send feedback (${pending.length})`}
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={clearQueue}
-              title="Discard all pending comments"
+              title="Discard queued feedback from this page"
             >
               Discard
             </Button>
@@ -257,6 +277,7 @@ export function Toolbar({
                   variant="ghost"
                   size="sm"
                   onClick={() => setActiveInput(activeInput === id ? null : id)}
+                  title={item.description}
                 >
                   {item.label}
                 </Button>

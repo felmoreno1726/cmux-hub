@@ -548,9 +548,9 @@ export function DiffFile({
               e.stopPropagation();
               setShowFileComment((v) => !v);
             }}
-            title="Comment on file"
+            title="Send feedback about this file to the linked terminal"
           >
-            Comment
+            Feedback
           </button>
         )}
         {badge && (

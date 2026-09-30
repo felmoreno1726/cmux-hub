@@ -157,11 +157,19 @@ export const api = {
     return fetchJSON<{ checks: unknown[] }>("/api/ci");
   },
 
-  executeAction(id: string, variables?: Record<string, string>, surfaceId?: string) {
-    return fetchJSON<{ ok: boolean; command: string }>("/api/action", {
+  async executeAction(id: string, variables?: Record<string, string>, surfaceId?: string) {
+    const result = await fetchJSON<{
+      ok: boolean;
+      command: string;
+      stderr?: string;
+      stdout?: string;
+    }>("/api/action", {
       method: "POST",
       body: JSON.stringify({ id, variables, surfaceId }),
     });
+    if (!result.ok)
+      throw new Error(result.stderr?.trim() || result.stdout?.trim() || "The action failed.");
+    return result;
   },
 
   getLauncherStatus() {

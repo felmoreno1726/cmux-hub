@@ -652,8 +652,14 @@ export function createAppConfig(deps: AppDeps) {
             logger.debug("shell action:", action.label, "command:", fullCommand);
             // Execute directly as subshell on server
             const shell = process.env.SHELL || "sh";
-            const proc = Bun.spawn([shell, "-c", fullCommand], {
+            const proc = Bun.spawn([shell, "-c", action.command], {
               cwd,
+              env: {
+                ...process.env,
+                ...Object.fromEntries(
+                  Object.entries(allVars).filter(([key]) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(key)),
+                ),
+              },
               stdout: "pipe",
               stderr: "pipe",
             });

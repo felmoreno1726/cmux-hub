@@ -21,6 +21,16 @@ Build a standalone binary with `bun run build:compile`, then run `./cmux-hub /pa
 
 The AI changes live in `server/explanations.ts`, `src/lib/explanation-client.ts`, and `src/components/InlineExplanation.tsx`. See [the implementation notes](docs/ai-explanations.md) for checks and limits.
 
+## Toolbar and feedback
+
+- **Commit staged** saves a local Git commit with your message. Only changes selected with `git add` are included. It does not upload anything to GitHub.
+- **Create PR** runs `gh pr create` to try to create a pull request: a GitHub page where people review a branch before merging it. This is an upstream shortcut, not a full form. It supplies a title but cannot answer prompts for a description or where to push. Use `gh pr create` in a terminal for the full guided flow.
+- **Claude review** sends an English Claude Code command to the linked terminal. It reviews local branch and working-tree changes, so no pull request is needed. The terminal must be at a shell prompt. If an agent is already running there, write your review request in that agent's chat instead.
+- **Feedback** opens a note about a file. Selecting diff lines opens a note about those lines. **Send to terminal** sends the note and file reference to the linked terminal and presses Enter. Keep your coding agent open there. This does not publish a GitHub comment and works without a pull request.
+- **Queue feedback** holds notes in this page. **Send feedback (N)** pastes the collected notes into the linked terminal together. Depending on the terminal app, you may need to press Enter there. Queued notes are lost if the page reloads.
+
+Existing GitHub pull-request comments can be displayed in the diff. Those are separate from the local feedback you write here. Hover over a toolbar action for its description.
+
 A browser-based diff viewer for [cmux](https://cmux.dev). See what changed at a glance — syntax-highlighted diffs, inline review comments, commit history, GitHub PR status, and custom toolbar actions, all streamed in real time via WebSocket.
 
 https://github.com/user-attachments/assets/f5fbfd8b-6473-4f83-882e-967a5ca33205

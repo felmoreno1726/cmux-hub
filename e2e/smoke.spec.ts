@@ -4,6 +4,28 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { execSync } from "node:child_process";
 
+test("toolbar explains destinations and keeps the message when an action fails", async ({
+  page,
+}) => {
+  await page.route("**/api/action", async (route) => {
+    await route.fulfill({
+      json: { ok: false, command: "git commit", stderr: "No changes selected for this commit." },
+    });
+  });
+  await page.goto("/");
+  const toolbar = page.getByTestId("toolbar");
+  await expect(toolbar.getByRole("button", { name: "Claude review" })).toHaveAttribute(
+    "title",
+    /shell prompt/,
+  );
+  await toolbar.getByRole("button", { name: "Commit staged", exact: true }).click();
+  await expect(toolbar).toContainText("Does not push to GitHub.");
+  await toolbar.getByPlaceholder("Commit message...").fill("Keep this message");
+  await toolbar.getByRole("button", { name: "Commit staged", exact: true }).last().click();
+  await expect(toolbar.getByRole("alert")).toHaveText("No changes selected for this commit.");
+  await expect(toolbar.getByPlaceholder("Commit message...")).toHaveValue("Keep this message");
+});
+
 // Resolve repo dir from the test server's /api/status endpoint
 async function getRepoDir(request: import("@playwright/test").APIRequestContext) {
   const res = await request.get("/api/status", {
@@ -115,7 +137,8 @@ test("clicking a diff line opens the comment form, and submitting sends the comm
   await expect(commentForm).toBeVisible();
   // Type a comment and submit
   await commentForm.fill("This looks good");
-  await helloFile.getByRole("button", { name: "Send now" }).click();
+  await expect(helloFile).toContainText("Goes to the linked terminal, not GitHub.");
+  await helloFile.getByRole("button", { name: "Send to terminal" }).click();
   // Comment form disappears after successful submission
   await expect(commentForm).not.toBeVisible();
   // Verify the request was sent with correct payload

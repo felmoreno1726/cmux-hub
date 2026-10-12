@@ -57,6 +57,7 @@ const watcher = createFileWatcher(defaultWatcherFactory, repoDir);
 const app = createAppConfig({
   actions: DEFAULT_ACTIONS,
   explanationRunner: async () => "This change updates the example code.",
+  explanationModelResolver: async () => "test-model",
   port: PORT,
   git,
   cmux,

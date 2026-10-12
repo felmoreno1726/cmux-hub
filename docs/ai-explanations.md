@@ -7,6 +7,10 @@ header and a compact overall summary above the diffs. Use only + and − control
 The user approved automatic summaries for visible files and required the code to
 load independently of them.
 
+Summaries must use the newest visible OpenAI Luna model listed by Codex and stay
+easy to read. Completion requires automatic model discovery, larger summary text,
+and verification that the code still loads while summaries wait.
+
 ## Behavior
 
 - Diffs render immediately. AI requests never gate the diff view.
@@ -14,6 +18,13 @@ load independently of them.
   delay. Offscreen files wait until visible.
 - Plus adds detail. Minus shortens the answer and then hides it.
 - Provider settings live in environment variables, without a configuration menu.
+- OpenAI through Codex is the default. The highest numbered stable `gpt-*-luna`
+  model in Codex's catalog is selected. The catalog is checked on the first
+  summary request and again after ten minutes when another request arrives.
+  Existing cached summaries remain unchanged. Set `DIFFY_CODEX_MODEL` to pin a
+  model or `DIFFY_PROVIDER=claude` to use Claude instead.
+- Summary text is 15px with increased contrast. The shortest summary still uses
+  at most two lines. Labels and status text are 12px and 13px.
 - Matching answers are cached. Changed code dims the old summary until a new
   answer arrives. Queued requests for old or hidden diffs are skipped.
 - Requests run one at a time. Errors stay in the summary row and do not hide code.
@@ -26,6 +37,11 @@ load independently of them.
 `explanation-client.ts` queues and caches browser requests. `explanations.ts` on
 the server calls the installed provider CLI. The upstream viewer only needs the
 raw patch and an inline summary slot in each file component.
+`explanation-models.ts` reads Codex's `model/list` through its app server. It
+handles multiple pages and shares discovery across requests. Discovery has a
+30-second deadline. Failures stay visible and can be retried with +. It never
+falls back to a larger model. The selection rule and refresh behavior are covered
+by `explanation-models.test.ts`.
 
 ## Verification
 

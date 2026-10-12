@@ -27,10 +27,12 @@ import {
   readExplanationRequest,
 } from "./explanations.ts";
 import type { ModelRunner } from "./explanations.ts";
+import type { ExplanationModelResolver } from "./explanation-models.ts";
 
 type AppDeps = {
   port: number;
   explanationRunner?: ModelRunner;
+  explanationModelResolver?: ExplanationModelResolver;
   git: GitService;
   cmux: CmuxService;
   github: GitHubService;
@@ -72,7 +74,10 @@ type AppDeps = {
 export function createAppConfig(deps: AppDeps) {
   const { port, git, cmux, github, cwd, defaultSurfaceId, browserSurfaceId } = deps;
   const securityConfig = { port };
-  const explanations = createExplanationService(deps.explanationRunner);
+  const explanations = createExplanationService(
+    deps.explanationRunner,
+    deps.explanationModelResolver,
+  );
 
   function resolveSurfaceId(surfaceId?: string): string | undefined {
     return surfaceId ?? defaultSurfaceId;
@@ -255,7 +260,7 @@ export function createAppConfig(deps: AppDeps) {
         const securityError = validateRequest(req, securityConfig);
         if (securityError) return securityError;
         return jsonResponse(
-          { provider: process.env.DIFFY_PROVIDER === "codex" ? "codex" : "claude" },
+          { provider: process.env.DIFFY_PROVIDER === "claude" ? "claude" : "codex" },
           200,
           req,
         );

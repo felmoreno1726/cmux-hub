@@ -88,6 +88,7 @@ test("each visible file gets only its patch and plus/minus changes detail", asyn
   const explanation = page.getByRole("group", { name: "Explanation for hello.ts", exact: true });
   await expect(explanation).toContainText("Detail 0: hello.ts");
   const fileRequest = requests.find((request) => request.file === "hello.ts")!;
+  expect(fileRequest.provider).toBe("codex");
   expect(fileRequest.patch).toContain("hello.ts");
   expect(fileRequest.patch).not.toContain("large-file.ts");
   await explanation.getByRole("button", { name: "More detail" }).click();

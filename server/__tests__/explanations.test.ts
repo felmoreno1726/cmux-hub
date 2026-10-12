@@ -24,7 +24,10 @@ const INPUT: ExplanationRequest = {
 
 test("answers are cached by full patch, scope, depth, provider and review point", async () => {
   let calls = 0;
-  const service = createExplanationService(async () => `Answer ${++calls}`);
+  const service = createExplanationService(
+    async () => `Answer ${++calls}`,
+    async () => "test-model",
+  );
   const first = await service.explain(INPUT);
   expect((await service.explain(INPUT)).cached).toBe(true);
   expect(first.text).toBe("Answer 1");

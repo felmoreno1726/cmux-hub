@@ -3,6 +3,10 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
+import {
+  createExplanationModelResolver,
+  type ExplanationModelResolver,
+} from "./explanation-models.ts";
 import { DETAIL_LEVELS, splitFilePatches } from "../src/lib/explanations.ts";
 import type {
   ExplanationProvider,
@@ -36,17 +40,16 @@ export class ExplanationError extends Error {
   }
 }
 
-export function createExplanationService(run: ModelRunner = runModel) {
+export function createExplanationService(
+  run: ModelRunner = runModel,
+  resolveModel: ExplanationModelResolver = createExplanationModelResolver(),
+) {
   const cache = new Map<string, ExplanationResult>();
   const pending = new Map<string, Promise<ExplanationResult>>();
-  const models = {
-    claude: process.env.DIFFY_CLAUDE_MODEL || "haiku",
-    codex: process.env.DIFFY_CODEX_MODEL || "gpt-5.6-luna",
-  };
 
   return {
     async explain(input: ExplanationRequest): Promise<ExplanationResult> {
-      const model = models[input.provider];
+      const model = await resolveModel(input.provider);
       const { prompt, sampled } = buildExplanationPrompt(input);
       const key = createHash("sha256").update(JSON.stringify({ input, model })).digest("hex");
       const cached = cache.get(key);
@@ -218,7 +221,7 @@ export function buildModelCommand(request: ModelRequest): string[] {
     "--ignore-user-config",
     "--skip-git-repo-check",
     "-c",
-    'model_reasoning_effort="none"',
+    'model_reasoning_effort="low"',
     "-",
   ];
 }

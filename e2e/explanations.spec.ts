@@ -4,7 +4,6 @@ import type { ExplanationRequest } from "../src/lib/explanations.ts";
 const answer = {
   text: "The greeting now includes the world.",
   model: "test-model",
-  sampled: false,
   cached: false,
 };
 

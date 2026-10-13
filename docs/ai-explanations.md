@@ -9,14 +9,17 @@ load independently of them.
 
 Summaries must use the newest visible OpenAI Luna model listed by Codex and stay
 easy to read. Completion requires automatic model discovery, larger summary text,
-and verification that the code still loads while summaries wait.
+and verification that the code still loads while summaries wait. Every summary
+must receive the full diff. Detail controls change only the answer length.
 
 ## Behavior
 
 - Diffs render immediately. AI requests never gate the diff view.
 - Visible files get a one-sentence explanation after a 600-millisecond settling
   delay. Offscreen files wait until visible.
-- Plus adds detail. Minus shortens the answer and then hides it.
+- Plus adds detail. Minus shortens the answer and then hides it. Every level
+  sends the same full diff. Per-file summaries receive that file's full patch,
+  while the overall summary receives the full combined patch.
 - Provider settings live in environment variables, without a configuration menu.
 - OpenAI through Codex is the default. The highest numbered stable `gpt-*-luna`
   model in Codex's catalog is selected. The catalog is checked on the first
@@ -59,11 +62,17 @@ The earlier implementation's real Claude and Codex smoke calls passed.
 Browser and server caches each retain at most 100 answers. A model request has a
 two-minute deadline. Queued requests can be skipped; a model call already running
 finishes and populates the cache. Navigation may reset the chosen detail level.
-Patches above two million characters are rejected. Context budgets range from
-4,000 to 120,000 characters, with a visible notice when code is omitted.
+Patches above two million characters are rejected. Accepted patches are never
+shortened. If a provider cannot accept the full prompt, its error is shown while
+the diff remains readable. Tests `every detail level sends the full diff to the
+model` and `review prompts include both full snapshots at every detail level`
+verify complete input across detail levels.
 
 ## Delivery
 
 Work stays on the local `feat/ai-explanations` branch until approved for publishing.
-The installed `cmux-hub-ai` command points to the compiled fork. No fork release
-has been published. The updater targets the fork, preserving the AI additions.
+The installed `cmux-hub-ai` command runs `src/cli.ts` through Bun with
+`CMUX_HUB_OPEN_BROWSER=1`. Each launch reads the current checkout. Existing
+processes must be restarted for server changes. `CMUX_HUB_BROWSER_SURFACE`
+reuses an existing tab during a restart. No fork release has been published.
+The compiled binary's updater targets the fork, preserving the AI additions.

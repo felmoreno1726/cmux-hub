@@ -13,7 +13,6 @@ export type ExplanationRequest = {
 export type ExplanationResult = {
   text: string;
   model: string;
-  sampled: boolean;
   cached: boolean;
 };
 

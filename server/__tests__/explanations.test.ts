@@ -4,9 +4,8 @@ import {
   buildModelCommand,
   createExplanationService,
   readExplanationRequest,
-  samplePatch,
 } from "../explanations.ts";
-import { indexFilePatches } from "../../src/lib/explanations.ts";
+import { DETAIL_LEVELS, indexFilePatches } from "../../src/lib/explanations.ts";
 import type { ExplanationRequest } from "../../src/lib/explanations.ts";
 import { createAppConfig } from "../app.ts";
 import { createGitService } from "../git.ts";
@@ -88,19 +87,28 @@ test("empty and unchanged diffs never call a model, but reverted changes do", as
   expect(calls).toBe(1);
 });
 
-test("large diffs share the context budget across files", () => {
+test("every detail level sends the full diff to the model", async () => {
   const patch =
     PATCH +
-    "x".repeat(20_000) +
+    "+first file line\n".repeat(10_000) +
     "\n" +
     PATCH.replaceAll("hello.ts", "last.ts") +
-    "y".repeat(20_000);
-  const sampled = samplePatch(patch, 4_000);
-  expect(sampled.sampled).toBe(true);
-  expect(sampled.text.length).toBeLessThanOrEqual(4_000);
-  expect(sampled.text).toContain("a/hello.ts");
-  expect(sampled.text).toContain("a/last.ts");
-  expect(samplePatch(PATCH, 4_000)).toEqual({ text: PATCH, sampled: false });
+    "+last file line\n".repeat(10_000);
+  const prompts: string[] = [];
+  const service = createExplanationService(async ({ prompt }) => {
+    prompts.push(prompt);
+    return "Explained";
+  });
+  for (const depth of DETAIL_LEVELS.keys()) {
+    await service.explain({ ...INPUT, patch, depth });
+  }
+  expect(prompts).toHaveLength(DETAIL_LEVELS.length);
+  for (const prompt of prompts) {
+    expect(prompt.split("CURRENT PATCH:\n\n")[1]).toBe(patch);
+    expect(prompt).not.toContain("omitted");
+  }
+  expect(prompts[0]).toContain("at most 30 words");
+  expect(prompts.at(-1)).toContain("Walk through the changes by file");
 });
 
 test("focused patches exclude other files and retain rename/delete metadata", () => {
@@ -112,16 +120,20 @@ test("focused patches exclude other files and retain rename/delete metadata", ()
   expect(indexFilePatches(PATCH + removed + renamed).get("renamed.ts")).toBe(renamed);
 });
 
-test("review prompts distinguish two snapshots and disclose sampling", () => {
-  const { prompt, sampled } = buildExplanationPrompt({
-    ...INPUT,
-    previousPatch: PATCH.repeat(200),
-  });
-  expect(sampled).toBe(true);
-  expect(prompt).toContain("PREVIOUS REVIEWED PATCH:");
-  expect(prompt).toContain("CURRENT PATCH:");
-  expect(prompt).toContain("removed or reverted");
-  expect(prompt).toContain("untrusted data");
+test("review prompts include both full snapshots at every detail level", () => {
+  const previousPatch = PATCH.repeat(2_000);
+  for (const depth of DETAIL_LEVELS.keys()) {
+    const prompt = buildExplanationPrompt({
+      ...INPUT,
+      previousPatch,
+      depth,
+    });
+    expect(prompt).toContain(
+      `PREVIOUS REVIEWED PATCH:\n\n${previousPatch}\n\nCURRENT PATCH:\n\n${PATCH}`,
+    );
+    expect(prompt).toContain("removed or reverted");
+    expect(prompt).toContain("untrusted data");
+  }
 });
 
 test("request validation rejects malformed, oversized and invalid options", async () => {

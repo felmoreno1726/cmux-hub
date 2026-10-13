@@ -8,14 +8,20 @@ The code uses the full width. Each visible file gets a short explanation directl
 
 The only explanation controls are **+** and **−**. Plus adds detail. Minus shortens the answer, then hides it. Summaries start with one sentence. Files outside the visible area wait. Changes settle for 600 milliseconds before a request is queued. Superseded queued requests are skipped, and matching answers are reused. Old answers are dimmed while a new summary loads. A failed explanation leaves the code visible, with + available to retry.
 
-Install and sign in to the `codex` CLI first. Summaries default to the newest stable OpenAI Luna model listed by Codex. The viewer checks the catalog on the first summary request and checks again after ten minutes when another request arrives. Existing cached summaries are kept. Set `DIFFY_CODEX_MODEL` to pin a model. Set `DIFFY_PROVIDER=claude` to use Claude `haiku` instead, with `DIFFY_CLAUDE_MODEL` for a different Claude model. Model discovery uses the documented [Codex model list](https://learn.chatgpt.com/docs/app-server#list-models-modellist). Claude runs with tools and customizations disabled. Codex runs with a read-only sandbox and user configuration disabled. Both run from a temporary empty directory with session persistence disabled. Visible file patches and the overall diff are sent automatically to the chosen provider. Large patches are sampled and labeled as incomplete.
+Install and sign in to the `codex` CLI first. Summaries default to the newest stable OpenAI Luna model listed by Codex. The viewer checks the catalog on the first summary request and checks again after ten minutes when another request arrives. Existing cached summaries are kept. Set `DIFFY_CODEX_MODEL` to pin a model. Set `DIFFY_PROVIDER=claude` to use Claude `haiku` instead, with `DIFFY_CLAUDE_MODEL` for a different Claude model. Model discovery uses the documented [Codex model list](https://learn.chatgpt.com/docs/app-server#list-models-modellist). Claude runs with tools and customizations disabled. Codex runs with a read-only sandbox and user configuration disabled. Both run from a temporary empty directory with session persistence disabled. Visible file patches and the overall diff are sent automatically to the chosen provider. Summaries receive the full diff at every detail level. The + / − controls change only the answer length. Diffs above the request size limit are rejected with an error rather than shortened.
 
 Run this fork from source:
 
 ```sh
 bun install --frozen-lockfile
-bun src/cli.ts /path/to/your/repository
+CMUX_HUB_OPEN_BROWSER=1 bun src/cli.ts /path/to/your/repository
 ```
+
+A source launcher reads this checkout on each start, so no rebuild is needed.
+Already running viewers keep their server code until restarted. Source mode
+rebuilds the browser interface when files under `src/` change. To restart a
+viewer in an existing cmux tab, set `CMUX_HUB_BROWSER_SURFACE` to that tab's ID
+and keep its port, repository, and `CMUX_SURFACE_ID` terminal target.
 
 Build a standalone binary with `bun run build:compile`, then run `./cmux-hub /path/to/your/repository`. The upstream installation and plugin instructions below install azu's version, which does not contain this panel. This fork's self-updater points to this fork's releases. Until a release is published, update from source.
 

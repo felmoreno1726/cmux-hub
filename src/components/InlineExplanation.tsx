@@ -98,9 +98,6 @@ export function InlineExplanation({ patch, source, file, disabled }: Props) {
             ) : !displayed ? (
               <span className="inline-explanation-note">Summary will appear here</span>
             ) : null}
-            {displayed?.result.sampled && (
-              <span className="inline-explanation-note">Some code omitted</span>
-            )}
           </>
         )}
       </div>

@@ -461,15 +461,14 @@ async function waitForBrowserClose(surfaceRef: string) {
   await cleanup();
 }
 
-// Dev mode: skip browser split, just log the URL
-if (isDev) {
+if (isDev && !process.env.CMUX_HUB_OPEN_BROWSER && !process.env.CMUX_HUB_BROWSER_SURFACE) {
   logger.info("Dev mode: open http://127.0.0.1:" + server.port);
 } else {
   // bun --hot re-executes top-level code on every change.
   // Store the browser surface ref in globalThis to avoid opening a new window each time.
-  const existingSurface = (globalThis as Record<string, unknown>).__cmuxHubBrowserSurface as
-    | string
-    | undefined;
+  const existingSurface =
+    ((globalThis as Record<string, unknown>).__cmuxHubBrowserSurface as string | undefined) ??
+    process.env.CMUX_HUB_BROWSER_SURFACE;
   if (existingSurface) {
     logger.debug("reusing existing browser surface:", existingSurface);
     appDeps.browserSurfaceId = existingSurface;

@@ -2,6 +2,30 @@
 
 This is a fork of [cmux-hub by azu](https://github.com/azu/cmux-hub), with Diffy's AI summaries and explanations. The original viewer, history, and MIT license are preserved.
 
+## Open Diffy
+
+On this machine, `diffy` and `cmux-hub-ai` both launch this fork from source.
+From a cmux terminal inside the worktree you want to review, run:
+
+```sh
+diffy
+```
+
+To open another worktree, pass its path:
+
+```sh
+diffy /path/to/worktree
+```
+
+The command opens a browser panel in the calling cmux workspace and links feedback
+to the calling terminal. It uses the command's current directory unless a path is
+given. Another pane's focused directory cannot change that choice. The tests in
+`src/__tests__/target-dir.test.ts` cover current and explicit worktree paths.
+
+Agents should run `diffy` from their active worktree and keep its server process
+running while the panel is open. The older Python tool is available locally as
+`diffy-python`.
+
 ## AI explanations in this fork
 
 The code uses the full width. Each visible file gets a short explanation directly below its filename. A compact overall summary sits above the files. The diff loads immediately. Summaries arrive separately and never block reading or scrolling.

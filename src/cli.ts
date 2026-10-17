@@ -186,27 +186,9 @@ if (values.actions) {
   }
 }
 
-async function getFocusedCwd(): Promise<string | undefined> {
-  try {
-    const proc = Bun.spawn([CMUX_BIN, "sidebar-state"], { stdout: "pipe", stderr: "pipe" });
-    const output = await new Response(proc.stdout).text();
-    const exitCode = await proc.exited;
-    if (exitCode !== 0) return undefined;
-    const match = /^focused_cwd=(.+)$/m.exec(output);
-    if (match?.[1]) return match[1];
-  } catch {
-    // cmux not available
-  }
-  return undefined;
-}
-
-// Explicit target wins. When launched inside a linked Git worktree, keep the
-// process cwd instead of replacing it with a stale cmux focused_cwd.
-const CWD = await resolveTargetDir({
+const CWD = resolveTargetDir({
   explicitTarget: positionals[0],
   processCwd: process.cwd(),
-  run: defaultCommandRunner,
-  getFocusedCwd,
 });
 
 const git = createGitService(defaultCommandRunner, CWD);

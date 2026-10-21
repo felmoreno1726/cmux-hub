@@ -63,7 +63,7 @@ export function PendingComment({ comment, onUpdate, onDelete }: PendingCommentPr
 
   return (
     <div className="flex items-start gap-2 py-1 text-sm">
-      <span className="text-[#d29922] text-xs font-medium flex-shrink-0">Pending</span>
+      <span className="text-[#d29922] text-xs font-medium flex-shrink-0">Queued</span>
       <div className="flex-1 min-w-0 text-[#adbac7] whitespace-pre-wrap">{comment}</div>
       <div className="flex gap-1 flex-shrink-0">
         <button

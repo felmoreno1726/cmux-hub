@@ -21,9 +21,18 @@ import { isPathInsideReviewDirs, listReviewFiles } from "./review.ts";
 import { createReviewWatcher } from "./review-watcher.ts";
 import type { Launcher, ServerState } from "./launcher.ts";
 import { generateInspectorScript } from "./inspector.ts";
+import {
+  createExplanationService,
+  ExplanationError,
+  readExplanationRequest,
+} from "./explanations.ts";
+import type { ModelRunner } from "./explanations.ts";
+import type { ExplanationModelResolver } from "./explanation-models.ts";
 
 type AppDeps = {
   port: number;
+  explanationRunner?: ModelRunner;
+  explanationModelResolver?: ExplanationModelResolver;
   git: GitService;
   cmux: CmuxService;
   github: GitHubService;
@@ -65,6 +74,10 @@ type AppDeps = {
 export function createAppConfig(deps: AppDeps) {
   const { port, git, cmux, github, cwd, defaultSurfaceId, browserSurfaceId } = deps;
   const securityConfig = { port };
+  const explanations = createExplanationService(
+    deps.explanationRunner,
+    deps.explanationModelResolver,
+  );
 
   function resolveSurfaceId(surfaceId?: string): string | undefined {
     return surfaceId ?? defaultSurfaceId;
@@ -242,6 +255,35 @@ export function createAppConfig(deps: AppDeps) {
   }
 
   const apiRoutes: Record<string, unknown> = {
+    "/api/explain": {
+      GET(req: Request) {
+        const securityError = validateRequest(req, securityConfig);
+        if (securityError) return securityError;
+        return jsonResponse(
+          { provider: process.env.DIFFY_PROVIDER === "claude" ? "claude" : "codex" },
+          200,
+          req,
+        );
+      },
+      async POST(req: Request) {
+        const securityError = validateRequest(req, securityConfig);
+        if (securityError) return securityError;
+        const origin = req.headers.get("origin");
+        if (origin && origin !== new URL(req.url).origin) {
+          return errorResponse("Explanations must be requested from this viewer.", 403, req);
+        }
+        try {
+          const input = await readExplanationRequest(req);
+          return jsonResponse(await explanations.explain(input), 200, req);
+        } catch (error) {
+          return errorResponse(
+            error instanceof Error ? error.message : "The explanation failed.",
+            error instanceof ExplanationError ? error.status : 500,
+            req,
+          );
+        }
+      },
+    },
     "/api/diff": {
       async GET(req: Request) {
         const secErr = validateRequest(req, securityConfig);
@@ -615,8 +657,14 @@ export function createAppConfig(deps: AppDeps) {
             logger.debug("shell action:", action.label, "command:", fullCommand);
             // Execute directly as subshell on server
             const shell = process.env.SHELL || "sh";
-            const proc = Bun.spawn([shell, "-c", fullCommand], {
+            const proc = Bun.spawn([shell, "-c", action.command], {
               cwd,
+              env: {
+                ...process.env,
+                ...Object.fromEntries(
+                  Object.entries(allVars).filter(([key]) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(key)),
+                ),
+              },
               stdout: "pipe",
               stderr: "pipe",
             });

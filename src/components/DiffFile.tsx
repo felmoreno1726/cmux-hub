@@ -66,6 +66,7 @@ type RenderItem = FlatItem | FlatPRComment | FlatCommentForm | FlatPendingCommen
 
 type Props = {
   file: DiffFileType;
+  explanation?: React.ReactNode;
   onComment?: (
     file: string,
     startLine: number,
@@ -79,7 +80,13 @@ type Props = {
 
 const EXPAND_LINES = 20;
 
-export function DiffFile({ file, onComment, prComments = [], pendingComments = [] }: Props) {
+export function DiffFile({
+  file,
+  explanation,
+  onComment,
+  prComments = [],
+  pendingComments = [],
+}: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [selStart, setSelStart] = useState<number | null>(null);
   const [selEnd, setSelEnd] = useState<number | null>(null);
@@ -541,9 +548,9 @@ export function DiffFile({ file, onComment, prComments = [], pendingComments = [
               e.stopPropagation();
               setShowFileComment((v) => !v);
             }}
-            title="Comment on file"
+            title="Send feedback about this file to the linked terminal"
           >
-            Comment
+            Feedback
           </button>
         )}
         {badge && (
@@ -552,6 +559,7 @@ export function DiffFile({ file, onComment, prComments = [], pendingComments = [
           </span>
         )}
       </div>
+      <div hidden={collapsed}>{explanation}</div>
       {showFileComment && (
         <div className="px-4 py-2 bg-gray-900 border-x border-b border-[#30363d]">
           <CommentForm

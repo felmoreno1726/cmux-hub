@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import index from "../src/index.html";
 import { createAppConfig } from "../server/app.ts";
+import { DEFAULT_ACTIONS } from "../server/actions.ts";
 import { createGitService, defaultCommandRunner } from "../server/git.ts";
 import { createCmuxService, createDryRunConnector } from "../server/cmux.ts";
 import { createGitHubService } from "../server/github.ts";
@@ -54,6 +55,9 @@ const github = createGitHubService(defaultCommandRunner, repoDir);
 const watcher = createFileWatcher(defaultWatcherFactory, repoDir);
 
 const app = createAppConfig({
+  actions: DEFAULT_ACTIONS,
+  explanationRunner: async () => "This change updates the example code.",
+  explanationModelResolver: async () => "test-model",
   port: PORT,
   git,
   cmux,

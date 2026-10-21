@@ -52,10 +52,14 @@ export function CommentForm({ onSubmit, onCancel }: Props) {
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Write a comment..."
+        placeholder="Write feedback for your coding agent..."
         className="min-h-[60px] bg-gray-800 border-gray-700 text-gray-200"
         rows={3}
       />
+      <p className="text-xs text-[#848d97]">
+        Goes to the linked terminal, not GitHub. Keep your coding agent open there. No pull request
+        is needed.
+      </p>
       <div className="flex gap-2 justify-end">
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
           Cancel
@@ -68,7 +72,7 @@ export function CommentForm({ onSubmit, onCancel }: Props) {
           onClick={() => handleSubmit("review")}
           title={`${modKey}+Shift+Enter`}
         >
-          Add to review <span className="text-[#848d97] text-xs ml-1">{modKey}⇧↵</span>
+          Queue feedback <span className="text-[#848d97] text-xs ml-1">{modKey}⇧↵</span>
         </Button>
         <Button
           type="button"
@@ -77,7 +81,7 @@ export function CommentForm({ onSubmit, onCancel }: Props) {
           onClick={() => handleSubmit("send")}
           title={`${modKey}+Enter`}
         >
-          Send now <span className="text-[#848d97] text-xs ml-1">{modKey}↵</span>
+          Send to terminal <span className="text-[#848d97] text-xs ml-1">{modKey}↵</span>
         </Button>
       </div>
     </form>

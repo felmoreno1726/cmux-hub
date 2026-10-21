@@ -1,5 +1,6 @@
 export type ActionItem = {
   label: string;
+  description?: string;
   command: string;
   /** "paste-and-enter" pastes to cmux terminal with Enter, "shell" executes as subshell on server, "paste" pastes without Enter */
   type: "paste-and-enter" | "shell" | "paste";
@@ -28,21 +29,28 @@ export function isActionWithInput(
 
 export const DEFAULT_ACTIONS: MenuItem[] = [
   {
-    label: "Commit",
+    label: "Commit staged",
+    description:
+      "Save the changes selected with git add as a local commit. Does not push to GitHub.",
     type: "shell",
     command: 'git commit -m "$MSG"',
     input: { placeholder: "Commit message...", variable: "MSG" },
   },
   {
     label: "Create PR",
+    description:
+      "Try to create a pull request on GitHub. Requires gh login and a pushed branch; this shortcut cannot answer interactive prompts.",
     type: "shell",
     command: 'gh pr create --title "$TITLE"',
     input: { placeholder: "PR title...", variable: "TITLE" },
   },
   {
-    label: "AI Review",
+    label: "Claude review",
+    description:
+      "Run Claude Code in the linked terminal to review local changes. Use a shell prompt, not an active agent chat. No pull request is required.",
     type: "paste-and-enter",
-    command: 'claude "このPRの変更をレビューしてください" --allowedTools bash',
+    command:
+      'claude "Review the changes on this branch and in the working tree. Explain bugs, risks, and missing tests in English. Do not edit files or post to GitHub." --allowedTools bash',
   },
 ];
 
@@ -98,6 +106,9 @@ function validateActionItem(item: unknown, path: string): ActionItem {
   const obj = item as Record<string, unknown>;
   if (typeof obj.label !== "string" || !obj.label) {
     throw new Error(`${path}: "label" is required (string)`);
+  }
+  if (obj.description !== undefined && typeof obj.description !== "string") {
+    throw new Error(`${path}: "description" must be a string`);
   }
   if (typeof obj.command !== "string" || !obj.command) {
     throw new Error(`${path}: "command" is required (string)`);

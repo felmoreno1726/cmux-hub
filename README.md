@@ -1,5 +1,66 @@
 # cmux-hub
 
+This is a fork of [cmux-hub by azu](https://github.com/azu/cmux-hub), with Diffy's AI summaries and explanations. The original viewer, history, and MIT license are preserved.
+
+## Open Diffy
+
+On this machine, `diffy` and `cmux-hub-ai` both launch this fork from source.
+From a cmux terminal inside the worktree you want to review, run:
+
+```sh
+diffy
+```
+
+To open another worktree, pass its path:
+
+```sh
+diffy /path/to/worktree
+```
+
+The command opens a browser panel in the calling cmux workspace and links feedback
+to the calling terminal. It uses the command's current directory unless a path is
+given. Another pane's focused directory cannot change that choice. The tests in
+`src/__tests__/target-dir.test.ts` cover current and explicit worktree paths.
+
+Agents should run `diffy` from their active worktree and keep its server process
+running while the panel is open. The older Python tool is available locally as
+`diffy-python`.
+
+## AI explanations in this fork
+
+The code uses the full width. Each visible file gets a short explanation directly below its filename. A compact overall summary sits above the files. The diff loads immediately. Summaries arrive separately and never block reading or scrolling.
+
+The only explanation controls are **+** and **−**. Plus adds detail. Minus shortens the answer, then hides it. Summaries start with one sentence. Files outside the visible area wait. Changes settle for 600 milliseconds before a request is queued. Superseded queued requests are skipped, and matching answers are reused. Old answers are dimmed while a new summary loads. A failed explanation leaves the code visible, with + available to retry.
+
+Install and sign in to the `codex` CLI first. Summaries default to the newest stable OpenAI Luna model listed by Codex. The viewer checks the catalog on the first summary request and checks again after ten minutes when another request arrives. Existing cached summaries are kept. Set `DIFFY_CODEX_MODEL` to pin a model. Set `DIFFY_PROVIDER=claude` to use Claude `haiku` instead, with `DIFFY_CLAUDE_MODEL` for a different Claude model. Model discovery uses the documented [Codex model list](https://learn.chatgpt.com/docs/app-server#list-models-modellist). Claude runs with tools and customizations disabled. Codex runs with a read-only sandbox and user configuration disabled. Both run from a temporary empty directory with session persistence disabled. Visible file patches and the overall diff are sent automatically to the chosen provider. Summaries receive the full diff at every detail level. The + / − controls change only the answer length. Diffs above the request size limit are rejected with an error rather than shortened.
+
+Run this fork from source:
+
+```sh
+bun install --frozen-lockfile
+CMUX_HUB_OPEN_BROWSER=1 bun src/cli.ts /path/to/your/repository
+```
+
+A source launcher reads this checkout on each start, so no rebuild is needed.
+Already running viewers keep their server code until restarted. Source mode
+rebuilds the browser interface when files under `src/` change. To restart a
+viewer in an existing cmux tab, set `CMUX_HUB_BROWSER_SURFACE` to that tab's ID
+and keep its port, repository, and `CMUX_SURFACE_ID` terminal target.
+
+Build a standalone binary with `bun run build:compile`, then run `./cmux-hub /path/to/your/repository`. The upstream installation and plugin instructions below install azu's version, which does not contain this panel. This fork's self-updater points to this fork's releases. Until a release is published, update from source.
+
+The AI changes live in `server/explanations.ts`, `src/lib/explanation-client.ts`, and `src/components/InlineExplanation.tsx`. See [the implementation notes](docs/ai-explanations.md) for checks and limits.
+
+## Toolbar and feedback
+
+- **Commit staged** saves a local Git commit with your message. Only changes selected with `git add` are included. It does not upload anything to GitHub.
+- **Create PR** runs `gh pr create` to try to create a pull request: a GitHub page where people review a branch before merging it. This is an upstream shortcut, not a full form. It supplies a title but cannot answer prompts for a description or where to push. Use `gh pr create` in a terminal for the full guided flow.
+- **Claude review** sends an English Claude Code command to the linked terminal. It reviews local branch and working-tree changes, so no pull request is needed. The terminal must be at a shell prompt. If an agent is already running there, write your review request in that agent's chat instead.
+- **Feedback** opens a note about a file. Selecting diff lines opens a note about those lines. **Send to terminal** sends the note and file reference to the linked terminal and presses Enter. Keep your coding agent open there. This does not publish a GitHub comment and works without a pull request.
+- **Queue feedback** holds notes in this page. **Send feedback (N)** pastes the collected notes into the linked terminal together. Depending on the terminal app, you may need to press Enter there. Queued notes are lost if the page reloads.
+
+Existing GitHub pull-request comments can be displayed in the diff. Those are separate from the local feedback you write here. Hover over a toolbar action for its description.
+
 A browser-based diff viewer for [cmux](https://cmux.dev). See what changed at a glance — syntax-highlighted diffs, inline review comments, commit history, GitHub PR status, and custom toolbar actions, all streamed in real time via WebSocket.
 
 https://github.com/user-attachments/assets/f5fbfd8b-6473-4f83-882e-967a5ca33205

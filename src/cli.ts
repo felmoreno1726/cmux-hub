@@ -186,27 +186,9 @@ if (values.actions) {
   }
 }
 
-async function getFocusedCwd(): Promise<string | undefined> {
-  try {
-    const proc = Bun.spawn([CMUX_BIN, "sidebar-state"], { stdout: "pipe", stderr: "pipe" });
-    const output = await new Response(proc.stdout).text();
-    const exitCode = await proc.exited;
-    if (exitCode !== 0) return undefined;
-    const match = /^focused_cwd=(.+)$/m.exec(output);
-    if (match?.[1]) return match[1];
-  } catch {
-    // cmux not available
-  }
-  return undefined;
-}
-
-// Explicit target wins. When launched inside a linked Git worktree, keep the
-// process cwd instead of replacing it with a stale cmux focused_cwd.
-const CWD = await resolveTargetDir({
+const CWD = resolveTargetDir({
   explicitTarget: positionals[0],
   processCwd: process.cwd(),
-  run: defaultCommandRunner,
-  getFocusedCwd,
 });
 
 const git = createGitService(defaultCommandRunner, CWD);
@@ -461,15 +443,14 @@ async function waitForBrowserClose(surfaceRef: string) {
   await cleanup();
 }
 
-// Dev mode: skip browser split, just log the URL
-if (isDev) {
+if (isDev && !process.env.CMUX_HUB_OPEN_BROWSER && !process.env.CMUX_HUB_BROWSER_SURFACE) {
   logger.info("Dev mode: open http://127.0.0.1:" + server.port);
 } else {
   // bun --hot re-executes top-level code on every change.
   // Store the browser surface ref in globalThis to avoid opening a new window each time.
-  const existingSurface = (globalThis as Record<string, unknown>).__cmuxHubBrowserSurface as
-    | string
-    | undefined;
+  const existingSurface =
+    ((globalThis as Record<string, unknown>).__cmuxHubBrowserSurface as string | undefined) ??
+    process.env.CMUX_HUB_BROWSER_SURFACE;
   if (existingSurface) {
     logger.debug("reusing existing browser surface:", existingSurface);
     appDeps.browserSurfaceId = existingSurface;

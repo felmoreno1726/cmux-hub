@@ -18,6 +18,15 @@ async function fetchJSON<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  getExplanationSettings() {
+    return fetchJSON<{ provider: import("./explanations.ts").ExplanationProvider }>("/api/explain");
+  },
+  explain(input: import("./explanations.ts").ExplanationRequest) {
+    return fetchJSON<import("./explanations.ts").ExplanationResult>("/api/explain", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+  },
   getDiff(base?: string, target?: string) {
     const params = new URLSearchParams();
     if (base) params.set("base", base);
@@ -148,11 +157,19 @@ export const api = {
     return fetchJSON<{ checks: unknown[] }>("/api/ci");
   },
 
-  executeAction(id: string, variables?: Record<string, string>, surfaceId?: string) {
-    return fetchJSON<{ ok: boolean; command: string }>("/api/action", {
+  async executeAction(id: string, variables?: Record<string, string>, surfaceId?: string) {
+    const result = await fetchJSON<{
+      ok: boolean;
+      command: string;
+      stderr?: string;
+      stdout?: string;
+    }>("/api/action", {
       method: "POST",
       body: JSON.stringify({ id, variables, surfaceId }),
     });
+    if (!result.ok)
+      throw new Error(result.stderr?.trim() || result.stdout?.trim() || "The action failed.");
+    return result;
   },
 
   getLauncherStatus() {

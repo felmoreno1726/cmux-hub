@@ -7,6 +7,34 @@ import {
   validateActions,
 } from "../actions.ts";
 import type { MenuItem } from "../actions.ts";
+import { createAppConfig } from "../app.ts";
+import { createGitService } from "../git.ts";
+import { createGitHubService } from "../github.ts";
+import { createCmuxService, createDryRunConnector } from "../cmux.ts";
+
+test("shell actions receive the typed message before the shell expands variables", async () => {
+  const run = async () => "";
+  const cwd = process.cwd();
+  const app = createAppConfig({
+    port: 14569,
+    cwd,
+    git: createGitService(run, cwd),
+    github: createGitHubService(run, cwd),
+    cmux: createCmuxService(createDryRunConnector()),
+    actions: [{ label: "Read message", type: "shell", command: 'printf "%s" "$MSG"' }],
+  });
+  const route = app.apiRoutes["/api/action"] as { POST: (request: Request) => Promise<Response> };
+  const message = 'Fix "quotes", $HOME, $(echo wrong), and spaces';
+  const response = await route.POST(
+    new Request("http://127.0.0.1:14569/api/action", {
+      method: "POST",
+      headers: { host: "127.0.0.1:14569" },
+      body: JSON.stringify({ id: "0", variables: { MSG: message } }),
+    }),
+  );
+  expect(await response.json()).toMatchObject({ ok: true, stdout: message });
+  app.stop();
+});
 
 describe("shellEscape", () => {
   test("simple string", () => {

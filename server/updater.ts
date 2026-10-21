@@ -4,7 +4,7 @@ import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import pkg from "../package.json" with { type: "json" };
 
-const REPO = "azu/cmux-hub";
+const REPO = "felmoreno1726/cmux-hub";
 
 type GitHubRelease = {
   tag_name: string;

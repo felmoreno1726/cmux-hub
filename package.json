@@ -16,7 +16,7 @@
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "typecheck": "bun run --bun tsc --noEmit",
-    "test:e2e": "bunx playwright test e2e/smoke.spec.ts",
+    "test:e2e": "bunx playwright test e2e/smoke.spec.ts e2e/explanations.spec.ts",
     "screenshots": "bunx playwright test e2e/screenshots.spec.ts",
     "version:sync-plugin": "node scripts/sync-plugin-version.js",
     "version": "node scripts/sync-plugin-version.js && git add cmux-hub-plugin/.claude-plugin/plugin.json",

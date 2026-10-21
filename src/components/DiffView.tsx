@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import type { ParsedDiff } from "../lib/diff-parser.ts";
 import type { SelectedCommit } from "../hooks/useDiff.ts";
 import { DiffFile } from "./DiffFile.tsx";
@@ -6,6 +6,8 @@ import { CommitList } from "./CommitList.tsx";
 import { api } from "../lib/api.ts";
 import { useReviewQueue } from "../hooks/useReviewQueue.tsx";
 import type { CommentMode } from "./CommentForm.tsx";
+import { InlineExplanation } from "./InlineExplanation.tsx";
+import { indexFilePatches } from "../lib/explanations.ts";
 
 type PRComment = {
   id: number;
@@ -20,6 +22,8 @@ type PRComment = {
 
 type Props = {
   diff: ParsedDiff;
+  rawDiff: string;
+  explanationSource: string;
   loading: boolean;
   error: string | null;
   onRefresh: () => void;
@@ -34,6 +38,8 @@ type Props = {
 
 export function DiffView({
   diff,
+  rawDiff,
+  explanationSource,
   loading,
   error,
   onRefresh,
@@ -46,6 +52,7 @@ export function DiffView({
   onClearCommit,
 }: Props) {
   const { addToReview, pending } = useReviewQueue();
+  const filePatches = useMemo(() => indexFilePatches(rawDiff), [rawDiff]);
 
   const handleComment = useCallback(
     async (
@@ -125,12 +132,26 @@ export function DiffView({
           </span>
         </div>
       )}
+      <InlineExplanation
+        key={explanationSource}
+        patch={rawDiff}
+        source={explanationSource}
+        disabled={loading}
+      />
       {diff
         .filter((file) => !file.generated)
         .map((file, idx) => (
           <DiffFile
-            key={`${file.newPath}-${idx}`}
+            key={`${explanationSource}-${file.newPath}-${idx}`}
             file={file}
+            explanation={
+              <InlineExplanation
+                patch={filePatches.get(file.newPath) ?? ""}
+                source={explanationSource}
+                file={file.newPath}
+                disabled={loading}
+              />
+            }
             onComment={hasTerminal ? handleComment : undefined}
             prComments={prComments.filter((c) => c.path === file.newPath)}
             pendingComments={pending.filter((c) => c.file === file.newPath)}

@@ -17,6 +17,8 @@ import "./index.css";
 export default function App() {
   const {
     diff,
+    rawDiff,
+    base,
     loading,
     refreshing,
     error,
@@ -75,6 +77,10 @@ export default function App() {
               )}
               <DiffView
                 diff={diff}
+                rawDiff={rawDiff}
+                explanationSource={
+                  selectedCommit ? `Commit ${selectedCommit.hash}` : `${branch} · ${base ?? "HEAD"}`
+                }
                 loading={loading}
                 error={error}
                 onRefresh={refresh}

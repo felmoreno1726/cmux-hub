@@ -221,7 +221,8 @@ async function runModel(request: ModelRequest): Promise<string> {
           env: environment,
           timeout: MODEL_TIMEOUT_MS,
           killSignal: "SIGKILL",
-          maxBuffer: MAX_OUTPUT_BYTES,
+          // The Codex CLI echoes the whole prompt on stderr, so the buffer must hold it too.
+          maxBuffer: MAX_OUTPUT_BYTES + Buffer.byteLength(request.prompt),
         },
         (error, stdout, stderr) => {
           if (error) {
